@@ -32,3 +32,15 @@ SUMX(
     ),
     'PLN & USD UNION ALL'[Total Amount]
 )  
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+% Change YoY Sales = 
+VAR CurrentPeriodS = [Cumulative Sales]
+VAR PreviousYearS = CALCULATE([Cumulative Sales], SAMEPERIODLASTYEAR(Input[YEAR & MONTH]))
+
+RETURN
+IF(
+    ISBLANK(CurrentPeriodS) || ISBLANK(PreviousYearS),
+    BLANK(),
+    DIVIDE(CurrentPeriodS, PreviousYearS, 0) - 1
+)
