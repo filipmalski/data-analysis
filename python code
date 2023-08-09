@@ -1,1 +1,71 @@
+import pandas as pd
+import openpyxl
+from openpyxl import load_workbook
+import matplotlib.pyplot as plt
 
+
+#data extracting
+wb = pd.read_excel('C:/Users/filip.malski//Desktop/20230724_Sales&Revenue review per account_2023_06.xlsx',
+                   sheet_name='Input',
+                   usecols=['Client Sales Owner','Metric','Ultimate Parent Account','CLEN_NAME','YEAR','MONTH','Amount PLN'])
+
+wb['Amount PLN'] = wb['Amount PLN'].fillna(0)
+wb = wb.astype({
+    'YEAR': 'string',
+    'MONTH': 'string',
+    'Amount PLN': 'float32'
+})
+wb = wb.assign(date=pd.to_datetime(wb['YEAR'] + wb['MONTH'], format='%Y%m'))
+#wb = wb.drop(['YEAR','MONTH'],axis=1,inplace=True)
+
+#data filtering for pivot/chart
+
+top10_accounts = wb[(wb['Metric'] == 'Revenue') & (wb['date'].dt.year == 2023)].groupby('CLEN_NAME').agg({'Amount PLN':'sum'}).sort_values(
+    by='Amount PLN',
+    ascending=False
+)
+top10_accounts = top10_accounts.index[:10]
+filtered_data = wb[(wb['Metric'] == 'Revenue') & (wb['date'].dt.year == 2023) & (wb['CLEN_NAME'].isin(top10_accounts))]
+
+#pivoting/plotting
+
+pivot = filtered_data.pivot_table(
+    index=['Ultimate Parent Account','CLEN_NAME'],
+    columns='date',
+    values='Amount PLN',
+    aggfunc='sum',
+    margins=True
+).sort_values(
+    by='All',
+    ascending=False
+)
+
+plot_data = filtered_data.groupby('date').agg({'Amount PLN':'sum'})
+plot = plot_data.plot(xlabel='Date', ylabel='Total Sales (PLN)', title='Total Sales by Date')
+plt.show()
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#restructure the file with unpivoting columns
+import pandas as pd
+import openpyxl
+from openpyxl import load_workbook
+
+wb = pd.read_excel('C:/Users/06.2023.xlsx',
+                   usecols=['PARENT_CLEN_NAME','CLEN_NAME','PROJ_ID','PROJ_NAME','Reve 01','Reve 02','Reve 03','Reve 04','Reve 05', 'Reve 06', 'Client Sales Owner', 'Parent Client Sales Owner'])
+
+data = pd.melt(wb,
+               id_vars=['PARENT_CLEN_NAME','CLEN_NAME','PROJ_ID','PROJ_NAME','Client Sales Owner', 'Parent Client Sales Owner'],
+               value_vars=['Reve 01','Reve 02','Reve 03','Reve 04','Reve 05', 'Reve 06'],
+               value_name='Reve')
+
+data['variable'] = data['variable'].apply(lambda x: '2023-01' if x == 'Reve 01' else x)
+data['variable'] = data['variable'].apply(lambda x: '2023-02' if x == 'Reve 02' else x)
+data['variable'] = data['variable'].apply(lambda x: '2023-03' if x == 'Reve 03' else x)
+data['variable'] = data['variable'].apply(lambda x: '2023-04' if x == 'Reve 04' else x)
+data['variable'] = data['variable'].apply(lambda x: '2023-05' if x == 'Reve 05' else x)
+data['variable'] = data['variable'].apply(lambda x: '2023-06' if x == 'Reve 06' else x)
+
+
+with pd.ExcelWriter('Sales team after mod.xlsx') as writer:
+    data.to_excel(writer, index=False, sheet_name='Reshaped Data')
