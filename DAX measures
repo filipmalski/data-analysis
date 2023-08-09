@@ -1,0 +1,34 @@
+New Clients in the Recently Billed Month = 
+VAR PrevMonth = MONTH(NOW()) - 1
+VAR MonthBeforePrevious = MONTH(NOW()) - 2
+VAR ClientsUntilRecentMonth =
+    CALCULATETABLE(
+        VALUES('PLN & USD UNION ALL'[Account Name]),
+        'PLN & USD UNION ALL'[MONTH] >= 1 &&
+        'PLN & USD UNION ALL'[MONTH] <= MonthBeforePrevious &&
+        'PLN & USD UNION ALL'[Actuals/Pipeline] = "Actuals"
+    )
+VAR PrevMonthActuals =
+    CALCULATETABLE(
+        VALUES('PLN & USD UNION ALL'[Account Name]),
+        'PLN & USD UNION ALL'[MONTH] = PrevMonth &&
+        'PLN & USD UNION ALL'[Actuals/Pipeline] = "Actuals"
+    )
+VAR NewClients =
+    EXCEPT(PrevMonthActuals, ClientsUntilRecentMonth)
+VAR NewClientsCount =
+    COUNTROWS(DISTINCT(NewClients))
+RETURN
+    IF(ISBLANK(NewClientsCount), 0, NewClientsCount)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sales in the Month Before = 
+SUMX(
+    FILTER(
+        'PLN & USD UNION ALL', 
+        'PLN & USD UNION ALL'[YEAR] = 2023 && 
+        'PLN & USD UNION ALL'[Actuals/Pipeline] = "Actuals" && 
+        'PLN & USD UNION ALL'[MONTH] = MONTH(NOW())-2
+    ),
+    'PLN & USD UNION ALL'[Total Amount]
+)  
