@@ -83,3 +83,12 @@ VAR ProductReve = CALCULATE([Reve])
 RETURN
 DIVIDE(ProductReve,TotalReve)
 --------------------------------------------------------------------------------------------------
+FILTRY Z UZYCIEM TABELI (TWORZENIE KATEGORII GRUP DO FILTROWANIE)
+Final Measure for Reve = 
+IF( MAX (FilterRevenueTable[FilterRevenue]) = "Gross",
+    [Reve],
+    IF(MAX(FilterRevenueTable[FilterRevenue])="Net",
+    [Net Reve],
+    [Profit Measure]
+    )
+)
