@@ -71,16 +71,11 @@ DATESYTD(DateTable[Date]))
 ------------------------------------------------------------------------------------------------
 Datesbetween example = CALCULATE([Reve], DATESBETWEEN(DateTable[Date],"2017-06-30", MAX(DateTable[Date])))
 -----------------------------------------------------------------------------------------------
-VAR CurrentRevenue = CALCULATE([Reve])
-VAR PreviousRevenue = CALCULATE([Reve], DATEADD(DateTable[Date], -1, YEAR))
-VAR YoYRevenue = 
-    DIVIDE(
-        CurrentRevenue,
-        PreviousRevenue,
-        0 -- Default value in case of division by zero
-    )
-
-RETURN YoYRevenue
+Reve MoM = 
+VAR Reve = CALCULATE([Reve])
+VAR PreviousReve = CALCULATE([Reve], DATEADD(DateTable[Date],-1,MONTH))
+RETURN 
+IF(PreviousReve = BLANK(),"", (Reve / PreviousReve)-1)
 -------------------------------------------------------------------------------------------------
 Product share in Total = 
 VAR TotalReve = CALCULATE([Reve], ALL(products[product]))
