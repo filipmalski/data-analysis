@@ -69,3 +69,5 @@ YTD Cumulative Reve =
 CALCULATE([Reve], 
 DATESYTD(DateTable[Date]))
 ------------------------------------------------------------------------------------------------
+Datesbetween example = CALCULATE([Reve], DATESBETWEEN(DateTable[Date],"2017-06-30", MAX(DateTable[Date])))
+-----------------------------------------------------------------------------------------------
