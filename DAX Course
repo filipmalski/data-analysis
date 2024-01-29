@@ -84,20 +84,24 @@ RETURN
 DIVIDE(ProductReve,TotalReve)
 --------------------------------------------------------------------------------------------------
 FILTRY Z UZYCIEM TABELI (TWORZENIE KATEGORII GRUP DO FILTROWANIE)
-Final Measure for Reve = 
-IF( MAX (FilterRevenueTable[FilterRevenue]) = "Gross", // czy wybrany jest filtr gross
-    CALCULATE([Reve],  
-        DATESBETWEEN(DateTable[Date],
-        MAX(DateTable[Date]) - MAX(TimeFilterTable[TimeValues]), // od maksymalnej daty w zbiorze odejmuje dni zaznaczone w filtrze aby uzyskac dany okres
-        MAX(DateTable[Date]))),
-
-    IF(MAX(FilterRevenueTable[FilterRevenue])="Net",
-    [Net Reve],
-
+Final Measure for Revenue = 
+IF ( MAX( FilterRevenueTable[FilterRevenue] ) = "Gross" , 
+    CALCULATE( [Revenue Measure] , 
+        DATESBETWEEN(  DateTable[Date] , 
+        MAX ( DateTable[Date] ) - MAX ( TimeFilterTable[TimeValues] ),
+        MAX ( DateTable[Date] )) )
     
-    [Profit Measure]
-    )
-)
+    , 
+    IF ( MAX( FilterRevenueTable[FilterRevenue] ) = "Net" ,
+        CALCULATE( [Net Revenue] , 
+        DATESBETWEEN(  DateTable[Date] , 
+        MAX ( DateTable[Date] ) - MAX ( TimeFilterTable[TimeValues] ),
+        MAX ( DateTable[Date] )) )   ,
+
+         CALCULATE( [Profit Measure] , 
+        DATESBETWEEN(  DateTable[Date] , 
+        MAX ( DateTable[Date] ) - MAX ( TimeFilterTable[TimeValues] ),
+        MAX ( DateTable[Date] )) )   )
 
 TABELKA
 TIMEFILTER TimeValues
@@ -106,3 +110,16 @@ TIMEFILTER TimeValues
 30 days      30
 1 year       365
 total        30000
+-----------------------------------------------------------------------------------------------------
+Revnue by topN products = 
+CALCULATE( [Revenue Measure] , 
+    FILTER ( products , products[Ranking by Revenue] <= MAX ( TopNFilter[TopNValue] ) ))
+------------------------------------------------------------------------------------------------------
+Revenue Measure running total in Date = 
+CALCULATE(
+	[Revenue Measure],
+	FILTER(
+		ALLSELECTED('DateTable'[Date]),
+		ISONORAFTER('DateTable'[Date], MAX('DateTable'[Date]), DESC)
+	)
+)
