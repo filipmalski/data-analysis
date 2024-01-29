@@ -85,10 +85,10 @@ DIVIDE(ProductReve,TotalReve)
 --------------------------------------------------------------------------------------------------
 FILTRY Z UZYCIEM TABELI (TWORZENIE KATEGORII GRUP DO FILTROWANIE)
 Final Measure for Reve = 
-IF( MAX (FilterRevenueTable[FilterRevenue]) = "Gross",
+IF( MAX (FilterRevenueTable[FilterRevenue]) = "Gross", // czy wybrany jest filtr gross
     CALCULATE([Reve],  
         DATESBETWEEN(DateTable[Date],
-        MAX(DateTable[Date]) - MAX(TimeFilterTable[TimeValues]),
+        MAX(DateTable[Date]) - MAX(TimeFilterTable[TimeValues]), // od maksymalnej daty w zbiorze odejmuje dni zaznaczone w filtrze aby uzyskac dany okres
         MAX(DateTable[Date]))),
 
     IF(MAX(FilterRevenueTable[FilterRevenue])="Net",
