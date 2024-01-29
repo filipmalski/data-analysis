@@ -82,3 +82,9 @@ VAR YoYRevenue =
 
 RETURN YoYRevenue
 -------------------------------------------------------------------------------------------------
+Product share in Total = 
+VAR TotalReve = CALCULATE([Reve], ALL(products[product]))
+VAR ProductReve = CALCULATE([Reve])
+RETURN
+DIVIDE(ProductReve,TotalReve)
+--------------------------------------------------------------------------------------------------
