@@ -13,4 +13,19 @@ CALENDAR(MINX('sales','sales'[date]),MAXX('sales','sales'[date])),
 "Quarter", "Q" & FORMAT ( [date], "Q" ), 
 "YearQuarter", FORMAT ( [date], "YYYY" ) & "/Q" & FORMAT ( [date], "Q" ))
 --------------------------------------------------------------------------------------
-
+Grupowanie wg top N
+1. Revenue Measure
+Revenue Measure = SUMX( sales , sales[quantity] * sales[price] ) 
+2. Calculated column in the products table 
+Ranking by Revenue = CALCULATE( RANKX( ALL(products) , [Revenue Measure] ))
+3. Manually create a new table with the 'Enter data manually' option as follows
+TopNames Min Max
+Top 10    1   10
+11-20     11  20
+5. Now you can create your final measure
+Revnue by topN products = CALCULATE([Revenue Measure],
+    FILTER(products, 
+        MAX('TopNFilter-Exercise'[Max]) >= products[Ranking by Revenue]
+        && 
+        MIN('TopNFilter-Exercise'[Min])  <= products[Ranking by Revenue]))
+-----------------------------------------------------------------------------------------
