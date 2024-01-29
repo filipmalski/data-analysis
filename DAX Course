@@ -1,3 +1,6 @@
+AVERAGEX, SUMX etc jako pierwszy argument biorą tabele - jesli chcemy liczyc cos po miesiacach dniach latach jako argument
+VALUES() jako lista uniklanych wartosci i wtedy te wartosci beda podstawa do agregacji danych
+-------------------------------------------------------------------------------------
 DateTable = 
 ADDCOLUMNS ( 
 CALENDAR(MINX('sales','sales'[date]),MAXX('sales','sales'[date])),
