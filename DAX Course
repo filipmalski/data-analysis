@@ -98,3 +98,11 @@ IF( MAX (FilterRevenueTable[FilterRevenue]) = "Gross",
     [Profit Measure]
     )
 )
+
+TABELKA
+TIMEFILTER TimeValues
+3 days       3
+7 days       7
+30 days      30
+1 year       365
+total        30000
