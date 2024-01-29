@@ -29,3 +29,6 @@ Revnue by topN products = CALCULATE([Revenue Measure],
         && 
         MIN('TopNFilter-Exercise'[Min])  <= products[Ranking by Revenue]))
 -----------------------------------------------------------------------------------------
+Average Daily Reve = 
+    AVERAGEX(VALUES(DateTable[Date]),[Reve])
+-----------------------------------------------------------------------------------------
