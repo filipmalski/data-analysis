@@ -1,5 +1,6 @@
 AVERAGEX, SUMX etc jako pierwszy argument biorą tabele - jesli chcemy liczyc cos po miesiacach dniach latach jako argument
 VALUES() jako lista uniklanych wartosci i wtedy te wartosci beda podstawa do agregacji danych
+w funkcji CALCULATE() - tabele zmnieniaja kontekst to obliczen, mozna korzystac z funkcji zwracajacych tabele np DATESYTD(), DATESBETWEEN()
 -------------------------------------------------------------------------------------
 DateTable = 
 ADDCOLUMNS ( 
