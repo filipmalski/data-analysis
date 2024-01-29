@@ -29,6 +29,35 @@ Revnue by topN products = CALCULATE([Revenue Measure],
         && 
         MIN('TopNFilter-Exercise'[Min])  <= products[Ranking by Revenue]))
 -----------------------------------------------------------------------------------------
-Average Daily Reve = 
-    AVERAGEX(VALUES(DateTable[Date]),[Reve])
------------------------------------------------------------------------------------------
+quarterly average revenue = 
+AVERAGEX(
+    VALUES(DateTable[YearQuarter]), // unikalne year & q jako agregacja per kwartal
+    [Reve]) // reve measure dla kazdego quarter oblicza reve
+------------------------------------------------------------------------------------------
+Share of products with price >3 in total = 
+CALCULATE(
+        COUNT(sales[quantity]), 
+        FILTER(products, products[price] >3)) 
+/ CALCULATE(COUNT(sales[quantity]), ALL(products))
+------------------------------------------------------------------------------------------
+Ranking by Reve = 
+CALCULATE(RANKX(ALL(products),[Reve]))
+-------------------------------------------------------------------------------------------
+% in total revenue = CALCULATE([Reve]) / CALCULATE([Reve], ALL(DateTable[Year]))
+-------------------------------------------------------------------------------------------
+All time customer ranking by quarterly average = 
+CALCULATE(
+    RANKX(ALL(customer), // ALL bierze pod uwage wszytskich clientow niezaleznie od filtrow
+    [quarterly average revenue]), // dla kazdego z nich oblicza avg quarter reve 
+    ALL(DateTable[Year])) //ranking na podstawie wszystkich lat niezaleznie od filtrow
+--------------------------------------------------------------------------------------------
+Difference from the filtered revenue = 
+VAR FilteredRevenue = 
+CALCULATE([Reve], 
+    FILTER(
+    products, products[price] < 6 && products[price]>4 || NOT(LEFT(products[product],1)="C")), 
+    FILTER(location, location[state]="Arizona"))
+VAR Revenue = [Reve]
+RETURN 
+Revenue - FilteredRevenue
+-----------------------------------------------------------------------------------------------
