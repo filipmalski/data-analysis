@@ -1,18 +1,105 @@
---Identify projects that are at risk for going overbudget. A project is considered to be overbudget if the cost of all employees assigned to the project is greater than the budget of the project.
---You'll need to prorate the cost of the employees to the duration of the project. For example, if the budget for a project that takes half a year to complete is $10K, 
---then the total half-year salary of all employees assigned to the project should not exceed $10K. Salary is defined on a yearly basis, so be careful how to calculate salaries for the projects that last less or more than one year.
---Output a list of projects that are overbudget with their project name, project budget, and prorated total employee expense (rounded to the next dollar amount).
-
-SELECT
-    a.title, a.budget, ROUND(SUM(salary*duration))
-FROM
-    (
-    SELECT project_id,title, linkedin_emp_projects.emp_id, linkedin_employees.salary,budget, duration
-    FROM linkedin_emp_projects
-    JOIN linkedin_employees
-    ON linkedin_employees.id=linkedin_emp_projects.emp_id
-    JOIN (
-          SELECT *, datediff(end_date,start_date)/365 AS duration 
-          FROM linkedin_projects) AS B
-    ON B.id=linkedin_emp_projects.project_id)a
-GROUP BY title
+SELECT 
+    YEAR(TRIP_DATE) AS rok, 
+    MONTH(TRIP_DATE) AS miesiac, 
+    CONCAT(SEGMENT_ORIGIN, SEGMENT_DESTINATION) AS odc,
+    FARE_TYPE AS idp,
+    dngoldprd.dict.emd.CATEGORY AS EMD_Category,
+    "" AS PPP_Category,
+    SALES_MARKET AS rks_corr,
+    SALES_CHANNEL AS kanal_final,
+    SUM(PAX_NUM) AS PAX,  
+    SUM(CASE WHEN FARE_TYPE = 'P' THEN FARE_GROSS_PLN ELSE 0 END) AS Rev_Fare, 
+    SUM(CASE WHEN FARE_TYPE = 'P' THEN FARE_GROSS_PLN + YQ_PLN ELSE 0 END) AS Rev_F_YQ, 
+    SUM(CASE WHEN FARE_TYPE = 'E' THEN FARE_GROSS_PLN ELSE 0 END) AS EMD, 
+    0 AS PPP, 
+    CASE WHEN FARE_TYPE IN ('P','B','I')  THEN 'PAX' ELSE 'EMD' END AS PAX_EMD_PPP, 
+    'Wykonanie' AS Budzet_Wykonanie
+FROM 
+    dngoldprd.dbi.flown_flight_coupons
+LEFT JOIN 
+    dngoldprd.dict.emd ON 
+    dngoldprd.dict.emd.RFISC = dngoldprd.dbi.flown_flight_coupons.RFISC_CODE
+WHERE 
+    YEAR(trip_date) = '2024' AND MONTH(TRIP_DATE) < MONTH(NOW())
+GROUP BY rok, miesiac, odc, idp, EMD_Category, PPP_Category, rks_corr, kanal_final, PAX_EMD_PPP, Budzet_Wykonanie
+UNION ALL
+SELECT 
+    YEAR(SALES_DATE) AS rok, 
+    MONTH(SALES_DATE) AS miesiac,
+    "" AS odc,
+    "E" AS idp,
+    "EMD S" AS EMD_Category,
+    "" AS PPP_Category,
+    SALES_MARKET AS rks_corr,
+    SALES_CHANNEL AS kanal_final,
+    0 AS PAX,
+    0 AS Rev_Fare,
+    0 AS Rev_F_YQ,
+    FARE_GROSS_PLN AS EMD,
+    0 AS PPP,
+    "EMD" AS PAX_EMD_PPP,
+    'Wykonanie' AS Budzet_Wykonanie
+FROM 
+    dngoldprd.dbi.sales_emd_ticket_sat
+LEFT JOIN 
+    dngoldprd.dict.emd ON dngoldprd.dbi.sales_emd_ticket_sat.RFISC_CODE = dngoldprd.dict.emd.rfisc
+WHERE 
+    dngoldprd.dict.emd.ROW_STATUS = "Accepted" 
+    AND YEAR(SALES_DATE) >= 2024 AND MONTH(SALES_DATE) < MONTH(NOW())
+    AND dngoldprd.dict.emd.BUDGET = "S"
+    AND emd.ROW_STATUS="Accepted"
+----------------------------------------------------------------------------------------------------------------------------
+SELECT 
+    TRIP_DATE, 
+    YEAR(TRIP_DATE) AS rok, 
+    MONTH(TRIP_DATE) AS miesiac, 
+    CONCAT(SEGMENT_ORIGIN, SEGMENT_DESTINATION) AS odc,
+    OPERATIONAL_FLIGHT_NUMBER,
+    FARE_TYPE AS idp,
+    CASE 
+        WHEN FARE_TYPE = 'B' THEN "B" -- FARE_TYPE B to PAX bezplatny
+        WHEN FARE_TYPE = 'I' THEN 'I' -- FARE_TYPE I to infant
+        WHEN FARE_TYPE = "P" THEN "P" -- FARE_TYPE P to PAX platny
+        WHEN FARE_TYPE = "E" THEN "B" -- FARE_TYPE E to EMD
+    END AS idpa,
+    CASE
+        WHEN FARE_TYPE = 'E' THEN 'EMD/bagaż'
+        WHEN OND_DESTINATION is null AND OND_ORIGIN is null THEN 'obcy'
+        WHEN SEGMENT_ORIGIN = OND_ORIGIN 
+            AND SEGMENT_DESTINATION = OND_DESTINATION THEN 'P2P' 
+        WHEN SEGMENT_DESTINATION = OND_ORIGIN 
+            AND SEGMENT_ORIGIN = OND_DESTINATION THEN 'P2P'
+        ELSE 'transfer'
+    END AS Typ_pax,
+    SUM(FARE_GROSS_PLN) AS sum_wbp_pln, 
+    SUM(FARE_GROSS_EUR) AS sum_wbp_eur, 
+    SUM(FARE_GROSS_USD) AS sum_wbp_usd,
+    SUM(YQ_PLN) AS sum_yq, 
+    SUM( PAX_NUM) AS pax, 
+    COUNT(FK_FLIGHT_COUPON_ID) AS flight_coupon_count,
+    COUNT(FK_TICKET_ID) AS ticket_id_count, 
+    SUM(YQ_USD) AS sum_yq_usd, 
+    SUM(YQ_EUR) AS sum_yq_eur
+FROM 
+    dngoldprd.dbi.flown_flight_coupons
+WHERE 
+    YEAR(trip_date) >= 2022
+GROUP BY 
+    TRIP_DATE, rok, miesiac, odc, OPERATIONAL_FLIGHT_NUMBER, idp, idpa, Typ_pax;
+----------------------------------------------------------------------------------------------------------------------------
+SELECT a.* FROM 
+(SELECT
+trip_date,
+FL_NUM_LEG,
+YEAR(trip_date) AS rok, 
+MONTH(trip_date) AS miesiac,
+CONCAT(SEGMENT_ORIGIN, SEGMENT_DESTINATION) AS odc,
+AIRCRAFT_TYPE,
+SUM(PAX_NUM) AS pax
+FROM dngoldprd.dbi.flown_flight_coupons
+LEFT JOIN dngoldprd.dbi.aircraft_per_flight 
+ON flown_flight_coupons.DAY_FL_NUM_LEG =dngoldprd.dbi.aircraft_per_flight .DAY_FL_NUM_LEG
+WHERE YEAR(trip_date) = '2024'
+GROUP BY 1,2,3,4,5,6)a
+WHERE AIRCRAFT_TYPE is null;
+----------------------------------------------------------------------------------------------------------------------------
