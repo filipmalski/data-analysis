@@ -1,3 +1,40 @@
+Custom YTD = 
+IF (
+    SELECTEDVALUE ( Tabela2[KKG_FC] ) <> "FTE",
+    TOTALYTD(SUMX(Tabela2,Tabela2[Wartość]),DateTable[Date]),
+    VAR CurrentMonthValue =
+        CALCULATE (
+            SUM ( Tabela2[Wartość] ),
+            Tabela2[KKG_FC] = "FTE"
+        )
+    RETURN
+        IF ( ISBLANK ( CurrentMonthValue ), 0, CurrentMonthValue )
+------------------------------------------------------------------------------------------------------------------------------
+Udział Reve Top 20 w Budżecie = 
+VAR budzet = 
+    CALCULATE(
+        [Reve (F+YQ) + EMD],
+        final_input[Budzet_Wykonanie] = "Budżet",
+        final_input[Route]<>""
+    )
+
+VAR Top20Tras =
+    TOPN(
+        20,
+        VALUES(final_input[Route]),
+        CALCULATE([Reve (budżet)],ALL(final_input[miesiac])),
+        DESC
+    )
+
+VAR ReveTop20Tras = 
+    CALCULATE(
+        [Reve (budżet)],
+        final_input[Route] IN Top20Tras && final_input[Route]<>""
+        )
+
+
+RETURN (ReveTop20Tras/budzet)
+---------------------------------------------------------------------------------------------------------------------------
 New Clients in the Recently Billed Month = 
 VAR PrevMonth = MONTH(NOW()) - 1
 VAR MonthBeforePrevious = MONTH(NOW()) - 2
@@ -45,10 +82,3 @@ IF(
     DIVIDE(CurrentPeriodS, PreviousYearS, 0) - 1
 )
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Sales in H2 = CALCULATE(
-    SUM('Data'[Total Amount]),
-    'Data'[Actuals/Pipeline]="Actuals" &&
-    'Data'[YEAR]=2023 &&
-    'Data'[MONTH] >6
-) 
---------------------------------------------------------------------------------------------------------------------------------------------------------------
