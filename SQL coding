@@ -87,19 +87,25 @@ WHERE
 GROUP BY 
     TRIP_DATE, rok, miesiac, odc, OPERATIONAL_FLIGHT_NUMBER, idp, idpa, Typ_pax;
 ----------------------------------------------------------------------------------------------------------------------------
-SELECT a.* FROM 
-(SELECT
-trip_date,
-FL_NUM_LEG,
-YEAR(trip_date) AS rok, 
-MONTH(trip_date) AS miesiac,
-CONCAT(SEGMENT_ORIGIN, SEGMENT_DESTINATION) AS odc,
-AIRCRAFT_TYPE,
-SUM(PAX_NUM) AS pax
-FROM dngoldprd.dbi.flown_flight_coupons
-LEFT JOIN dngoldprd.dbi.aircraft_per_flight 
-ON flown_flight_coupons.DAY_FL_NUM_LEG =dngoldprd.dbi.aircraft_per_flight .DAY_FL_NUM_LEG
-WHERE YEAR(trip_date) = '2024'
-GROUP BY 1,2,3,4,5,6)a
-WHERE AIRCRAFT_TYPE is null;
+--BOOKLETKA
+SELECT DATA as TRIP_DATE,ROK as rok, MIESIAC as miesiac,REJS_OP ,REJS_MKT, ODC AS odc,SMT as smt,SME as sme, IDK as idk, ODC as odc,RKS_CORR,KANAL_CORR,kom,
+IDP as idp, IDPA as idpa,RFISC, TKA,OND_ORIGIN_PORT,OND_DEST_PORT,PRTS,PRTL,
+CASE WHEN TKA=080 AND REJS_OP=REJS_MKT THEN 'OWN'
+	WHEN TKA<>080  AND REJS_OP=REJS_MKT THEN 'INTERLINE'
+	WHEN TKA<>080  AND REJS_OP<>REJS_MKT THEN 'CODESHARE'
+ELSE 'N/A' END AS INTERLINE_CODESHARE,
+SUM(LPA) AS PAX, SUM(CASE WHEN IDPA='I' THEN 0 ELSE LPA END) AS PAX_bez_inf, 
+SUM(WBP) AS SUM_of_wbp, SUM(WBE) AS SUM_of_wbe, SUM(WBU) AS SUM_of_wbu, SUM(YQ) AS SUM_of_YQ, 
+CASE WHEN SUM(WBP)=0 THEN 0 ELSE (SUM(WBE)/SUM(WBP)) * SUM(YQ) END AS SUM_of_YQ_EUR,
+CASE WHEN SUM(WBP)=0 THEN 0 ELSE (SUM(WBU)/SUM(WBP)) * SUM(YQ) END AS SUM_of_YQ_USD,
+CASE WHEN IDP='E' THEN 'EMD/bagaż'
+	WHEN TKA <> 080 THEN 'obcy'
+	WHEN OND_ORIGIN_PORT=PRTS
+		AND OND_DEST_PORT=PRTL THEN 'P2P'
+	WHEN OND_DEST_PORT=PRTS
+		AND OND_ORIGIN_PORT=PRTL THEN 'P2P'
+	ELSE 'transfer' END AS typ_pax
+FROM [DBODS].[ODS].[SAS_PL10]
+WHERE YEAR(DATA)>=2023
+GROUP BY DATA, ROK, MIESIAC, REJS_OP,REJS_MKT,ODC,SMT,SME,IDK,ODC,RKS_CORR,KANAL_CORR,kom,IDP,IDPA,RFISC,TKA,OND_ORIGIN_PORT,OND_DEST_PORT,PRTS,PRTL;
 ----------------------------------------------------------------------------------------------------------------------------
